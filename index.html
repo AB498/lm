@@ -95,10 +95,10 @@
         <div class="api-url-container">
             <div class="input-group">
                 <span class="input-group-text">API URL</span>
-                <input type="text" id="apiUrl" class="form-control" value="https://minilm-production.up.railway.app"
+                <input type="text" id="apiUrl" class="form-control" value="https://lm.up.railway.app"
                     placeholder="Enter API URL">
             </div>
-            <div class="form-text">Default: https://minilm-production.up.railway.app</div>
+            <div class="form-text">Default: https://lm.up.railway.app</div>
         </div>
 
         <div id="tester" class="row">
@@ -196,12 +196,12 @@
 }</code></pre>
 
                         <h6>Example (JavaScript)</h6>
-                        <pre><code>fetch('https://minilm-production.up.railway.app/health')
+                        <pre><code>fetch('https://lm.up.railway.app/health')
   .then(response => response.json())
   .then(data => console.log(data));</code></pre>
 
                         <h6>Example (cURL)</h6>
-                        <pre><code>curl -X GET https://minilm-production.up.railway.app/health</code></pre>
+                        <pre><code>curl -X GET https://lm.up.railway.app/health</code></pre>
                     </div>
                 </div>
             </div>
@@ -234,7 +234,7 @@
 }</code></pre>
 
                         <h6>Example (JavaScript)</h6>
-                        <pre><code>fetch('https://minilm-production.up.railway.app/embed', {
+                        <pre><code>fetch('https://lm.up.railway.app/embed', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json'
@@ -250,7 +250,7 @@
                         <pre><code>import requests
 
 response = requests.post(
-    'https://minilm-production.up.railway.app/embed',
+    'https://lm.up.railway.app/embed',
     json={'texts': ['Hello world', 'This is a test']}
 )
 embeddings = response.json()['embeddings']
@@ -287,7 +287,7 @@ print(embeddings)</code></pre>
 }</code></pre>
 
                         <h6>Example (JavaScript)</h6>
-                        <pre><code>fetch('https://minilm-production.up.railway.app/answer', {
+                        <pre><code>fetch('https://lm.up.railway.app/answer', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json'
@@ -304,7 +304,7 @@ print(embeddings)</code></pre>
 
                         <h6>Example (cURL)</h6>
                         <pre><code>curl -X POST \
-  https://minilm-production.up.railway.app/answer \
+  https://lm.up.railway.app/answer \
   -H 'Content-Type: application/json' \
   -d '{"question":"How do I donate?"}'</code></pre>
                     </div>
@@ -390,7 +390,7 @@ print(embeddings)</code></pre>
                 responseContainer.style.display = 'none';
 
                 try {
-                    const apiUrl = document.getElementById('apiUrl').value.trim() || 'https://minilm-production.up.railway.app';
+                    const apiUrl = document.getElementById('apiUrl').value.trim() || 'https://lm.up.railway.app';
                     const response = await fetch(`${apiUrl}/health`);
                     const data = await response.json();
 
@@ -430,7 +430,7 @@ print(embeddings)</code></pre>
                 responseContainer.style.display = 'none';
 
                 try {
-                    const apiUrl = document.getElementById('apiUrl').value.trim() || 'https://minilm-production.up.railway.app';
+                    const apiUrl = document.getElementById('apiUrl').value.trim() || 'https://lm.up.railway.app';
                     const texts = textInput.split('\n').filter(text => text.trim() !== '');
 
                     const response = await fetch(`${apiUrl}/embed`, {
@@ -491,7 +491,7 @@ print(embeddings)</code></pre>
                 responseContainer.style.display = 'none';
 
                 try {
-                    const apiUrl = document.getElementById('apiUrl').value.trim() || 'https://minilm-production.up.railway.app';
+                    const apiUrl = document.getElementById('apiUrl').value.trim() || 'https://lm.up.railway.app';
 
                     const response = await fetch(`${apiUrl}/answer`, {
                         method: 'POST',
