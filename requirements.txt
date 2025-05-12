@@ -1,0 +1,5 @@
+onnxruntime
+requests
+huggingface_hub
+transformers
+flask

@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiniLM API Tester</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+
+        .card {
+            margin-bottom: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: none;
+        }
+
+        .card-header {
+            background-color: #6c757d;
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+            border-color: #0a58ca;
+        }
+
+        pre {
+            background-color: #f8f9fa;
+            padding: 1rem;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .api-url-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .response-container {
+            margin-top: 1rem;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            padding: 1rem;
+        }
+
+        .spinner-border {
+            display: none;
+            margin-left: 10px;
+        }
+
+        .confidence-meter {
+            height: 10px;
+            border-radius: 5px;
+            background-color: #e9ecef;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .confidence-value {
+            height: 100%;
+            background-color: #0d6efd;
+            transition: width 0.5s ease-in-out;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">MiniLM API Tester</h1>
+
+        <div class="d-flex justify-content-center mb-4">
+            <ul class="nav nav-pills">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#tester">API Tester</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#api-docs">API Documentation</a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="api-url-container">
+            <div class="input-group">
+                <span class="input-group-text">API URL</span>
+                <input type="text" id="apiUrl" class="form-control" value="https://minilm-production.up.railway.app"
+                    placeholder="Enter API URL">
+            </div>
+            <div class="form-text">Default: https://minilm-production.up.railway.app</div>
+        </div>
+
+        <div id="tester" class="row">
+            <!-- Health Check Section -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Health Check</div>
+                    <div class="card-body">
+                        <p>Test the server health endpoint</p>
+                        <button id="healthCheckBtn" class="btn btn-primary">
+                            Check Health
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        </button>
+                        <div id="healthResponse" class="response-container mt-3" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Embedding Section -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Text Embedding</div>
+                    <div class="card-body">
+                        <p>Generate embeddings for text</p>
+                        <div class="mb-3">
+                            <label for="embedText" class="form-label">Enter text (separate multiple texts with new
+                                lines)</label>
+                            <textarea id="embedText" class="form-control" rows="3"
+                                placeholder="Enter text here..."></textarea>
+                        </div>
+                        <button id="embedBtn" class="btn btn-primary">
+                            Generate Embeddings
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        </button>
+                        <div id="embedResponse" class="response-container mt-3" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ Answer Section -->
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">FAQ Answer</div>
+                    <div class="card-body">
+                        <p>Ask a question to get an answer from the FAQ database</p>
+                        <div class="mb-3">
+                            <label for="questionText" class="form-label">Enter your question</label>
+                            <input type="text" id="questionText" class="form-control"
+                                placeholder="e.g., How do I donate?">
+                        </div>
+                        <button id="questionBtn" class="btn btn-primary">
+                            Get Answer
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        </button>
+                        <div id="questionResponse" class="response-container mt-3" style="display: none;">
+                            <div id="matchedQuestion" class="fw-bold mb-2"></div>
+                            <div id="answerText" class="mb-3"></div>
+                            <div>
+                                <small class="text-muted">Confidence Score: <span id="confidenceScore">0</span></small>
+                                <div class="confidence-meter">
+                                    <div class="confidence-value" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Documentation Section -->
+    <div id="api-docs" class="container mt-5 pt-4">
+        <h2 class="text-center mb-4">API Documentation</h2>
+        <p class="text-center mb-4">Use these endpoints to integrate MiniLM text embeddings and FAQ answering into your
+            applications.</p>
+
+        <div class="row">
+            <!-- Health Endpoint Documentation -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">Health Check API</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>Endpoint</h6>
+                        <pre><code>GET /health</code></pre>
+
+                        <h6>Description</h6>
+                        <p>Check if the API server is running and available.</p>
+
+                        <h6>Response</h6>
+                        <pre><code>{
+  "status": "ok",
+  "message": "Server is running"
+}</code></pre>
+
+                        <h6>Example (JavaScript)</h6>
+                        <pre><code>fetch('https://minilm-production.up.railway.app/health')
+  .then(response => response.json())
+  .then(data => console.log(data));</code></pre>
+
+                        <h6>Example (cURL)</h6>
+                        <pre><code>curl -X GET https://minilm-production.up.railway.app/health</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Embed Endpoint Documentation -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">Text Embedding API</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>Endpoint</h6>
+                        <pre><code>POST /embed</code></pre>
+
+                        <h6>Description</h6>
+                        <p>Generate vector embeddings for one or more text strings using the all-MiniLM-L6-v2 model.</p>
+
+                        <h6>Request Body</h6>
+                        <pre><code>{
+  "texts": ["text1", "text2", ...]
+}</code></pre>
+
+                        <h6>Response</h6>
+                        <pre><code>{
+  "embeddings": [
+    [0.123, 0.456, ...], // embedding for text1
+    [0.789, 0.012, ...], // embedding for text2
+    ...
+  ]
+}</code></pre>
+
+                        <h6>Example (JavaScript)</h6>
+                        <pre><code>fetch('https://minilm-production.up.railway.app/embed', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    texts: ['Hello world', 'This is a test']
+  })
+})
+.then(response => response.json())
+.then(data => console.log(data.embeddings));</code></pre>
+
+                        <h6>Example (Python)</h6>
+                        <pre><code>import requests
+
+response = requests.post(
+    'https://minilm-production.up.railway.app/embed',
+    json={'texts': ['Hello world', 'This is a test']}
+)
+embeddings = response.json()['embeddings']
+print(embeddings)</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Answer Endpoint Documentation -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">FAQ Answer API</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>Endpoint</h6>
+                        <pre><code>POST /answer</code></pre>
+
+                        <h6>Description</h6>
+                        <p>Find the most relevant answer to a question from the FAQ database using semantic similarity.
+                        </p>
+
+                        <h6>Request Body</h6>
+                        <pre><code>{
+  "question": "Your question here"
+}</code></pre>
+
+                        <h6>Response</h6>
+                        <pre><code>{
+  "question": "Your question here",
+  "answer": "The answer to your question",
+  "matchedQuestion": "The FAQ question that matched",
+  "confidence": 0.8765 // similarity score (0-1)
+}</code></pre>
+
+                        <h6>Example (JavaScript)</h6>
+                        <pre><code>fetch('https://minilm-production.up.railway.app/answer', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    question: 'How do I donate?'
+  })
+})
+.then(response => response.json())
+.then(data => {
+  console.log('Answer:', data.answer);
+  console.log('Confidence:', data.confidence);
+});</code></pre>
+
+                        <h6>Example (cURL)</h6>
+                        <pre><code>curl -X POST \
+  https://minilm-production.up.railway.app/answer \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"How do I donate?"}'</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Information -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">Additional Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Error Handling</h6>
+                        <p>All endpoints return appropriate HTTP status codes:</p>
+                        <ul>
+                            <li><strong>200</strong> - Success</li>
+                            <li><strong>400</strong> - Bad request (invalid input)</li>
+                            <li><strong>500</strong> - Server error</li>
+                            <li><strong>503</strong> - Service unavailable (model still loading)</li>
+                        </ul>
+
+                        <h6>Error Response Format</h6>
+                        <pre><code>{
+  "error": "Error message description"
+}</code></pre>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Model Information</h6>
+                        <p>This API uses the <a href="https://huggingface.co/Xenova/all-MiniLM-L6-v2"
+                                target="_blank">all-MiniLM-L6-v2</a> model for generating text embeddings.</p>
+                        <ul>
+                            <li>Embedding dimensions: 384</li>
+                            <li>Embeddings are L2-normalized</li>
+                            <li>Mean pooling is used for sentence embeddings</li>
+                        </ul>
+
+                        <h6>Rate Limits</h6>
+                        <p>Please be considerate with your API usage. There are currently no enforced rate limits, but
+                            excessive usage may result in temporary restrictions.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Handle navigation tabs
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+
+                    // Remove active class from all links
+                    navLinks.forEach(l => l.classList.remove('active'));
+
+                    // Add active class to clicked link
+                    this.classList.add('active');
+
+                    // Get the target section
+                    const targetId = this.getAttribute('href');
+                    const targetSection = document.querySelector(targetId);
+
+                    // Smooth scroll to the target section
+                    window.scrollTo({
+                        top: targetSection.offsetTop - 20,
+                        behavior: 'smooth'
+                    });
+                });
+            });
+
+            // Health Check
+            document.getElementById('healthCheckBtn').addEventListener('click', async function () {
+                const button = this;
+                const spinner = button.querySelector('.spinner-border');
+                const responseContainer = document.getElementById('healthResponse');
+
+                spinner.style.display = 'inline-block';
+                button.disabled = true;
+                responseContainer.style.display = 'none';
+
+                try {
+                    const apiUrl = document.getElementById('apiUrl').value.trim() || 'https://minilm-production.up.railway.app';
+                    const response = await fetch(`${apiUrl}/health`);
+                    const data = await response.json();
+
+                    responseContainer.innerHTML = `
+                        <div class="alert ${response.ok ? 'alert-success' : 'alert-danger'}">
+                            Status: ${response.status} ${response.statusText}
+                        </div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } catch (error) {
+                    responseContainer.innerHTML = `
+                        <div class="alert alert-danger">
+                            Error: ${error.message}
+                        </div>
+                    `;
+                } finally {
+                    spinner.style.display = 'none';
+                    button.disabled = false;
+                    responseContainer.style.display = 'block';
+                }
+            });
+
+            // Embedding
+            document.getElementById('embedBtn').addEventListener('click', async function () {
+                const button = this;
+                const spinner = button.querySelector('.spinner-border');
+                const responseContainer = document.getElementById('embedResponse');
+                const textInput = document.getElementById('embedText').value.trim();
+
+                if (!textInput) {
+                    alert('Please enter some text to embed');
+                    return;
+                }
+
+                spinner.style.display = 'inline-block';
+                button.disabled = true;
+                responseContainer.style.display = 'none';
+
+                try {
+                    const apiUrl = document.getElementById('apiUrl').value.trim() || 'https://minilm-production.up.railway.app';
+                    const texts = textInput.split('\n').filter(text => text.trim() !== '');
+
+                    const response = await fetch(`${apiUrl}/embed`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ texts })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        const embeddings = data.embeddings;
+                        responseContainer.innerHTML = `
+                            <div class="alert alert-success">
+                                Successfully generated embeddings for ${embeddings.length} text(s)
+                            </div>
+                            <p>First embedding dimensions: ${embeddings[0].length}</p>
+                            <p>Sample values (first 5):</p>
+                            <pre>${JSON.stringify(embeddings[0].slice(0, 5), null, 2)}</pre>
+                        `;
+                    } else {
+                        responseContainer.innerHTML = `
+                            <div class="alert alert-danger">
+                                Error: ${data.error || 'Unknown error'}
+                            </div>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        `;
+                    }
+                } catch (error) {
+                    responseContainer.innerHTML = `
+                        <div class="alert alert-danger">
+                            Error: ${error.message}
+                        </div>
+                    `;
+                } finally {
+                    spinner.style.display = 'none';
+                    button.disabled = false;
+                    responseContainer.style.display = 'block';
+                }
+            });
+
+            // FAQ Answer
+            document.getElementById('questionBtn').addEventListener('click', async function () {
+                const button = this;
+                const spinner = button.querySelector('.spinner-border');
+                const responseContainer = document.getElementById('questionResponse');
+                const questionInput = document.getElementById('questionText').value.trim();
+
+                if (!questionInput) {
+                    alert('Please enter a question');
+                    return;
+                }
+
+                spinner.style.display = 'inline-block';
+                button.disabled = true;
+                responseContainer.style.display = 'none';
+
+                try {
+                    const apiUrl = document.getElementById('apiUrl').value.trim() || 'https://minilm-production.up.railway.app';
+
+                    const response = await fetch(`${apiUrl}/answer`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ question: questionInput })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        document.getElementById('matchedQuestion').textContent = `Q: ${data.matchedQuestion}`;
+                        document.getElementById('answerText').textContent = `A: ${data.answer}`;
+
+                        const confidenceScore = data.confidence;
+                        document.getElementById('confidenceScore').textContent = confidenceScore.toFixed(4);
+
+                        // Update confidence meter (scale from 0 to 1)
+                        const confidencePercent = Math.max(0, Math.min(100, confidenceScore * 100));
+                        document.querySelector('.confidence-value').style.width = `${confidencePercent}%`;
+
+                        // Change color based on confidence
+                        let confidenceColor = '#dc3545'; // red
+                        if (confidenceScore > 0.7) {
+                            confidenceColor = '#198754'; // green
+                        } else if (confidenceScore > 0.5) {
+                            confidenceColor = '#ffc107'; // yellow
+                        }
+                        document.querySelector('.confidence-value').style.backgroundColor = confidenceColor;
+                    } else {
+                        responseContainer.innerHTML = `
+                            <div class="alert alert-danger">
+                                Error: ${data.error || 'Unknown error'}
+                            </div>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        `;
+                    }
+                } catch (error) {
+                    responseContainer.innerHTML = `
+                        <div class="alert alert-danger">
+                            Error: ${error.message}
+                        </div>
+                    `;
+                } finally {
+                    spinner.style.display = 'none';
+                    button.disabled = false;
+                    responseContainer.style.display = 'block';
+                }
+            });
+        });
+    </script>
+
+    <!-- Footer -->
+    <footer class="bg-light py-4 mt-5">
+        <div class="container text-center">
+            <p>
+                <small class="text-muted">
+                    MiniLM API - Powered by <a href="https://huggingface.co/Xenova/all-MiniLM-L6-v2"
+                        target="_blank">all-MiniLM-L6-v2</a> |
+                    Hosted on <a href="https://railway.app" target="_blank">Railway</a>
+                </small>
+            </p>
+        </div>
+    </footer>
+</body>
+
+</html>
