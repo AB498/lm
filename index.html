@@ -138,9 +138,48 @@
                 </div>
             </div>
 
+            <!-- Model Info Section -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Model Information</div>
+                    <div class="card-body">
+                        <p>Get information about the model being used</p>
+                        <button id="modelInfoBtn" class="btn btn-primary">
+                            Get Model Info
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        </button>
+                        <div id="modelInfoResponse" class="response-container mt-3" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ Query Section -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">FAQ Query</div>
+                    <div class="card-body">
+                        <p>Find multiple matching FAQs for a query</p>
+                        <div class="mb-3">
+                            <label for="faqQueryText" class="form-label">Enter your query</label>
+                            <input type="text" id="faqQueryText" class="form-control"
+                                placeholder="e.g., How do I donate?">
+                        </div>
+                        <div class="mb-3">
+                            <label for="topKValue" class="form-label">Number of results (top_k)</label>
+                            <input type="number" id="topKValue" class="form-control" min="1" max="10" value="3">
+                        </div>
+                        <button id="faqQueryBtn" class="btn btn-primary">
+                            Search FAQs
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        </button>
+                        <div id="faqQueryResponse" class="response-container mt-3" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+
             <!-- FAQ Answer Section -->
             <div class="col-md-12">
-                <div class="card">
+                <div class="card mt-4">
                     <div class="card-header">FAQ Answer</div>
                     <div class="card-body">
                         <p>Ask a question to get an answer from the FAQ database</p>
@@ -206,6 +245,37 @@
                 </div>
             </div>
 
+            <!-- Model Info Endpoint Documentation -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">Model Info API</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>Endpoint</h6>
+                        <pre><code>GET /info</code></pre>
+
+                        <h6>Description</h6>
+                        <p>Get information about the model being used, including dimensions and max sequence length.</p>
+
+                        <h6>Response</h6>
+                        <pre><code>{
+  "model_name": "sentence-transformers/all-MiniLM-L6-v2 (ONNX)",
+  "embedding_dimensions": 384,
+  "max_sequence_length": 256
+}</code></pre>
+
+                        <h6>Example (JavaScript)</h6>
+                        <pre><code>fetch('https://lm.up.railway.app/info')
+  .then(response => response.json())
+  .then(data => console.log(data));</code></pre>
+
+                        <h6>Example (cURL)</h6>
+                        <pre><code>curl -X GET https://lm.up.railway.app/info</code></pre>
+                    </div>
+                </div>
+            </div>
+
             <!-- Embed Endpoint Documentation -->
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
@@ -230,7 +300,10 @@
     [0.123, 0.456, ...], // embedding for text1
     [0.789, 0.012, ...], // embedding for text2
     ...
-  ]
+  ],
+  "dimensions": 384,
+  "processing_time_seconds": 0.123,
+  "texts_processed": 2
 }</code></pre>
 
                         <h6>Example (JavaScript)</h6>
@@ -259,8 +332,69 @@ print(embeddings)</code></pre>
                 </div>
             </div>
 
+            <!-- FAQ Query Endpoint Documentation -->
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">FAQ Query API</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6>Endpoint</h6>
+                        <pre><code>POST /faq</code></pre>
+
+                        <h6>Description</h6>
+                        <p>Find multiple relevant FAQ matches for a query using semantic similarity.</p>
+
+                        <h6>Request Body</h6>
+                        <pre><code>{
+  "query": "Your query here",
+  "top_k": 3  // Optional, default: 1
+}</code></pre>
+
+                        <h6>Response</h6>
+                        <pre><code>{
+  "matches": [
+    {
+      "question": "FAQ question 1",
+      "answer": "Answer to question 1",
+      "score": 0.8765
+    },
+    {
+      "question": "FAQ question 2",
+      "answer": "Answer to question 2",
+      "score": 0.7654
+    },
+    ...
+  ],
+  "processing_time_seconds": 0.123,
+  "query": "Your query here"
+}</code></pre>
+
+                        <h6>Example (JavaScript)</h6>
+                        <pre><code>fetch('https://lm.up.railway.app/faq', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    query: 'How do I donate?',
+    top_k: 3
+  })
+})
+.then(response => response.json())
+.then(data => console.log(data.matches));</code></pre>
+
+                        <h6>Example (cURL)</h6>
+                        <pre><code>curl -X POST \
+  https://lm.up.railway.app/faq \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"How do I donate?","top_k":3}'</code></pre>
+                    </div>
+                </div>
+            </div>
+
             <!-- Answer Endpoint Documentation -->
-            <div class="col-md-4 mb-4">
+            <div class="col-md-6 mb-4">
                 <div class="card h-100">
                     <div class="card-header">
                         <h5 class="mb-0">FAQ Answer API</h5>
@@ -457,6 +591,142 @@ print(embeddings)</code></pre>
                         responseContainer.innerHTML = `
                             <div class="alert alert-danger">
                                 Error: ${data.error || 'Unknown error'}
+                            </div>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        `;
+                    }
+                } catch (error) {
+                    responseContainer.innerHTML = `
+                        <div class="alert alert-danger">
+                            Error: ${error.message}
+                        </div>
+                    `;
+                } finally {
+                    spinner.style.display = 'none';
+                    button.disabled = false;
+                    responseContainer.style.display = 'block';
+                }
+            });
+
+            // Model Info
+            document.getElementById('modelInfoBtn').addEventListener('click', async function () {
+                const button = this;
+                const spinner = button.querySelector('.spinner-border');
+                const responseContainer = document.getElementById('modelInfoResponse');
+
+                spinner.style.display = 'inline-block';
+                button.disabled = true;
+                responseContainer.style.display = 'none';
+
+                try {
+                    const apiUrl = document.getElementById('apiUrl').value.trim() || 'https://lm.up.railway.app';
+                    const response = await fetch(`${apiUrl}/info`);
+                    const data = await response.json();
+
+                    responseContainer.innerHTML = `
+                        <div class="alert ${response.ok ? 'alert-success' : 'alert-danger'}">
+                            Status: ${response.status} ${response.statusText}
+                        </div>
+                        <div class="mb-3">
+                            <strong>Model Name:</strong> ${data.model_name || 'N/A'}
+                        </div>
+                        <div class="mb-3">
+                            <strong>Embedding Dimensions:</strong> ${data.embedding_dimensions || 'N/A'}
+                        </div>
+                        <div class="mb-3">
+                            <strong>Max Sequence Length:</strong> ${data.max_sequence_length || 'N/A'}
+                        </div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } catch (error) {
+                    responseContainer.innerHTML = `
+                        <div class="alert alert-danger">
+                            Error: ${error.message}
+                        </div>
+                    `;
+                } finally {
+                    spinner.style.display = 'none';
+                    button.disabled = false;
+                    responseContainer.style.display = 'block';
+                }
+            });
+
+            // FAQ Query
+            document.getElementById('faqQueryBtn').addEventListener('click', async function () {
+                const button = this;
+                const spinner = button.querySelector('.spinner-border');
+                const responseContainer = document.getElementById('faqQueryResponse');
+                const queryInput = document.getElementById('faqQueryText').value.trim();
+                const topK = parseInt(document.getElementById('topKValue').value) || 3;
+
+                if (!queryInput) {
+                    alert('Please enter a query');
+                    return;
+                }
+
+                spinner.style.display = 'inline-block';
+                button.disabled = true;
+                responseContainer.style.display = 'none';
+
+                try {
+                    const apiUrl = document.getElementById('apiUrl').value.trim() || 'https://lm.up.railway.app';
+
+                    const response = await fetch(`${apiUrl}/faq`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            query: queryInput,
+                            top_k: topK
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.matches && data.matches.length > 0) {
+                        let matchesHtml = '';
+                        data.matches.forEach((match, index) => {
+                            const confidencePercent = Math.max(0, Math.min(100, match.score * 100));
+                            let confidenceColor = '#dc3545'; // red
+                            if (match.score > 0.7) {
+                                confidenceColor = '#198754'; // green
+                            } else if (match.score > 0.5) {
+                                confidenceColor = '#ffc107'; // yellow
+                            }
+
+                            matchesHtml += `
+                                <div class="card mb-3">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <span>Match #${index + 1}</span>
+                                        <span class="badge bg-secondary">Score: ${match.score.toFixed(4)}</span>
+                                    </div>
+                                    <div class="card-body">
+                                        <h6>Question:</h6>
+                                        <p>${match.question}</p>
+                                        <h6>Answer:</h6>
+                                        <p>${match.answer}</p>
+                                        <div class="confidence-meter">
+                                            <div class="confidence-value" style="width: ${confidencePercent}%; background-color: ${confidenceColor}"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+
+                        responseContainer.innerHTML = `
+                            <div class="alert alert-success">
+                                Found ${data.matches.length} matches for your query
+                            </div>
+                            <div class="mb-3">
+                                <strong>Processing Time:</strong> ${data.processing_time_seconds.toFixed(4)} seconds
+                            </div>
+                            ${matchesHtml}
+                        `;
+                    } else {
+                        responseContainer.innerHTML = `
+                            <div class="alert alert-warning">
+                                No matches found for your query
                             </div>
                             <pre>${JSON.stringify(data, null, 2)}</pre>
                         `;

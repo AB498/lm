@@ -353,7 +353,7 @@ if __name__ == '__main__':
 
         print(f"Starting server on port {port}")
         print("Press Ctrl+C to stop the server")
-        app.run(debug=False, host='0.0.0.0', port=port)
+        app.run(debug=True, host='0.0.0.0', port=port)
     except KeyboardInterrupt:
         print("\nServer stopped by user")
     except Exception as e:
