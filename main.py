@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, send_from_directory
 import numpy as np
 import time
 import os
@@ -7,11 +7,8 @@ from transformers import AutoTokenizer
 from pathlib import Path
 from huggingface_hub import hf_hub_download
 
-app = Flask(__name__)
-
-# Create templates directory if it doesn't exist
-if not os.path.exists('templates'):
-    os.makedirs('templates')
+# Initialize Flask app with static files from the root directory
+app = Flask(__name__, static_url_path='', static_folder='.')
 
 # Mean Pooling - Take attention mask into account for correct averaging
 def mean_pooling(token_embeddings, attention_mask):
@@ -217,7 +214,7 @@ def find_best_faq_match(query_text: str, top_k: int = 1):
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return send_from_directory('.', 'index.html')
 
 @app.route('/embed', methods=['POST'])
 def embed():
@@ -254,6 +251,13 @@ def embed():
 
     except Exception as e:
         return {'error': str(e)}, 500
+
+@app.route('/health', methods=['GET'])
+def health():
+    return {
+        'status': 'ok',
+        'message': 'Server is running'
+    }
 
 @app.route('/info', methods=['GET'])
 def model_info():
@@ -300,6 +304,43 @@ def faq_query():
             'processing_time_seconds': float(processing_time),
             'query': query
         }
+
+    except Exception as e:
+        return {'error': str(e)}, 500
+
+@app.route('/answer', methods=['POST'])
+def answer():
+    # Get query from request
+    data = request.get_json()
+
+    if not data or 'question' not in data:
+        return {'error': 'Please provide a question'}, 400
+
+    question = data['question']
+
+    # Validate input
+    if not isinstance(question, str):
+        return {'error': 'Question must be a string'}, 400
+
+    # Find best matching FAQ
+    try:
+        matches = find_best_faq_match(question, 1)
+
+        if matches and len(matches) > 0:
+            match = matches[0]
+            return {
+                'question': question,
+                'answer': match['answer'],
+                'matchedQuestion': match['question'],
+                'confidence': float(match['score'])
+            }
+        else:
+            return {
+                'question': question,
+                'answer': 'Sorry, I could not find an answer to your question.',
+                'matchedQuestion': '',
+                'confidence': 0.0
+            }
 
     except Exception as e:
         return {'error': str(e)}, 500
