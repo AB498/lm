@@ -126,7 +126,7 @@ def convert_numpy_types(obj):
     return obj
 
 # Function to encode text using ONNX model
-def encode(texts, normalize_embeddings=True):
+def get_embedding(texts, normalize_embeddings=True):
     # Ensure texts is a list
     if isinstance(texts, str):
         texts = [texts]
@@ -181,12 +181,12 @@ def find_best_faq_match(query_text: str, top_k: int = 1):
     top_k = max(1, top_k)
 
     # Encode the query
-    query_embedding = encode(query_text)
+    query_embedding = get_embedding(query_text)
 
     # Encode FAQs if not already cached
     if FAQ_EMBEDDINGS is None:
         faq_questions = [faq["question"] for faq in FAQS]
-        FAQ_EMBEDDINGS = encode(faq_questions)
+        FAQ_EMBEDDINGS = get_embedding(faq_questions)
 
     # Calculate cosine similarities
     cos_scores = cosine_similarity(query_embedding, FAQ_EMBEDDINGS)[0]
@@ -234,7 +234,7 @@ def embed():
 
     # Generate embeddings
     try:
-        embeddings = encode(texts)
+        embeddings = get_embedding(texts)
         processing_time = time.time() - start_time
 
         # Convert numpy types to Python native types
@@ -262,7 +262,7 @@ def health():
 @app.route('/info', methods=['GET'])
 def model_info():
     # Get model inputs to determine embedding dimensions
-    sample_embedding = encode(["Sample text for dimension check"])
+    sample_embedding = get_embedding(["Sample text for dimension check"])
     embedding_dimensions = sample_embedding.shape[1]
 
     # Get max sequence length from tokenizer
@@ -326,7 +326,7 @@ def answer():
     try:
         matches = find_best_faq_match(question, 1)
 
-        if matches and len(matches) > 0:
+        if matches and len(matches) > 0 and matches[0].get('score', 0) > 0.5:
             match = matches[0]
             return {
                 'question': question,
